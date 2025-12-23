@@ -114,6 +114,18 @@ namespace PalCalc.UI.ViewModel
             
             logger.Information("Reachable pal selected: {palName}", selectedPal.ModelObject.Name);
             
+            // Get the current source selections from PalSource, not from CurrentPalSpecifier
+            // because CurrentPalSpecifier might not have them set yet
+            var currentSelections = currentPalTarget.PalSource?.Selections;
+            logger.Information("OnReachablePalSelected: Current PalSource has {count} selections", currentSelections?.Count ?? 0);
+            if (currentSelections != null)
+            {
+                foreach (var sel in currentSelections)
+                {
+                    logger.Information("  - Current selection: {id}", sel.SerializedId);
+                }
+            }
+            
             // Create a new target with the selected pal
             var newTarget = new PalSpecifierViewModel(Guid.NewGuid().ToString(), new PalCalc.Solver.PalSpecifier
             {
@@ -126,8 +138,24 @@ namespace PalCalc.UI.ViewModel
                 IV_Defense = 0,
             });
             
-            // Copy the source selections from the current target
-            newTarget.PalSourceSelections = currentPalTarget.CurrentPalSpecifier.PalSourceSelections;
+            // Copy the source selections from the current PalSource
+            if (currentSelections != null)
+            {
+                newTarget.PalSourceSelections = currentSelections.ToList();
+            }
+            else
+            {
+                newTarget.PalSourceSelections = new List<PalCalc.UI.ViewModel.Solver.IPalSourceTreeSelection>();
+            }
+            
+            logger.Information("OnReachablePalSelected: New target created with {count} source selections", newTarget.PalSourceSelections?.Count ?? 0);
+            if (newTarget.PalSourceSelections != null)
+            {
+                foreach (var sel in newTarget.PalSourceSelections)
+                {
+                    logger.Information("  - New target selection: {id}", sel.SerializedId);
+                }
+            }
             
             // Add to targets list
             Add(newTarget);

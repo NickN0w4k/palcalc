@@ -540,6 +540,30 @@ namespace PalCalc.UI
                     ?.ToList();
             }
 
+            // Migrate old guild selections to player selections
+            if (palSourceSelections != null)
+            {
+                var migratedSelections = new List<IPalSourceTreeSelection>();
+                foreach (var selection in palSourceSelections)
+                {
+                    if (selection is SourceTreeGuildSelection guildSelection)
+                    {
+                        // Convert guild selection to individual player selections for all guild members
+                        var playerSelections = guildSelection.ModelObject.MemberIds
+                            .Select(playerId => source.PlayersById.GetValueOrDefault(playerId))
+                            .Where(p => p != null)
+                            .Select(p => new SourceTreePlayerSelection(p))
+                            .ToList();
+                        migratedSelections.AddRange(playerSelections);
+                    }
+                    else
+                    {
+                        migratedSelections.Add(selection);
+                    }
+                }
+                palSourceSelections = migratedSelections;
+            }
+
             // null-coalesce for backwards compatibility with older saves
             var id = obj["Id"]?.ToObject<string>() ?? Guid.NewGuid().ToString();
             return new PalSpecifierViewModel(id, modelSpecifier)
