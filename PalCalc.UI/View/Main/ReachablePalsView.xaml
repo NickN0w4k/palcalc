@@ -48,15 +48,20 @@
                  BorderBrush="{DynamicResource {x:Static adonisUI:Brushes.Layer2BorderBrush}}">
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="mvm:PalViewModel">
-                    <Grid Margin="5" MinHeight="40">
+                    <Grid Margin="5" MinHeight="48">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="48" />
+                            <ColumnDefinition Width="10" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
+                        <!-- Pal icon -->
+                        <Image Grid.Column="0" Source="{Binding Icon}" Stretch="Uniform" />
+
+                        <!-- Name and ID -->
+                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
                             <TextBlock Text="{Binding ModelObject.Name}" 
                                        FontWeight="Bold" 
                                        FontSize="12"
@@ -66,7 +71,8 @@
                                        Foreground="{DynamicResource {x:Static adonisUI:Brushes.DisabledForegroundBrush}}" />
                         </StackPanel>
 
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <!-- Breeding Power -->
+                        <StackPanel Grid.Column="3" VerticalAlignment="Center" Margin="10,0,0,0">
                             <TextBlock Text="Breeding Power:" 
                                        FontSize="10" 
                                        Foreground="{DynamicResource {x:Static adonisUI:Brushes.DisabledForegroundBrush}}" />
@@ -81,13 +87,8 @@
                             </TextBlock>
                         </StackPanel>
 
-                        <TextBlock Grid.Column="2" 
-                                   VerticalAlignment="Center"
-                                   Margin="10,0,0,0"
-                                   FontSize="10"
-                                   Foreground="{DynamicResource {x:Static adonisUI:Brushes.AccentBrush}}">? Erreichbar</TextBlock>
-                        
-                        <Button Grid.Column="3"
+                        <!-- Select button -->
+                        <Button Grid.Column="4"
                                 Content="Select"
                                 Margin="10,0,0,0"
                                 Padding="8,4"

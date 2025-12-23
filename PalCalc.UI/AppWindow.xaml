@@ -7,9 +7,10 @@
                              xmlns:itl="clr-namespace:PalCalc.UI.Localization"
                              mc:Ignorable="d"
                              Title="{itl:LocalizedText LC_WINDOW_TITLE}"
-                             Width="1280" Height="720"
+                             Width="1400" Height="900"
                              IconVisibility="Collapsed"
-                             Content="{Binding Content}">
+                             Content="{Binding Content}"
+                             WindowState="Maximized">
     <Window.Style>
         <Style TargetType="Window" BasedOn="{StaticResource {x:Type Window}}" />
     </Window.Style>
