@@ -4,15 +4,24 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net9.0-windows10.0.17763.0</TargetFramework>
     <UseWPF>true</UseWPF>
-    <FileVersion></FileVersion>
-	<DisableFody Condition="'$(Configuration)' != 'Release'">true</DisableFody>
-	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	<CETCompat>false</CETCompat> <!-- https://github.com/tylercamp/palcalc/issues/85 -->
-	<ApplicationManifest>app.manifest</ApplicationManifest>
-	<Configurations>Debug;Release;Release_NoBundle</Configurations>
+    
+    <!-- Single-File mit eingebetteter Runtime -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <PublishTrimmed>false</PublishTrimmed>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    
+    <!-- Costura.Fody ENTFERNEN -->
+    <!-- <DisableFody Condition="'$(Configuration)' != 'Release'">true</DisableFody> -->
+    
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <CETCompat>false</CETCompat>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Configurations>Debug;Release</Configurations>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-	<NoWarn>9107</NoWarn>
-	<Platforms>x64</Platforms>
+    <NoWarn>9107</NoWarn>
+    <Platforms>x64</Platforms>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -294,6 +303,8 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+    <!-- ENTFERNEN: Costura.Fody und Fody -->
+    <!--
     <PackageReference Include="Costura.Fody" Version="6.0.0">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -301,6 +312,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    -->
     <PackageReference Include="gong-wpf-dragdrop" Version="4.0.0" />
     <PackageReference Include="Material.Icons.WPF" Version="2.1.9" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
