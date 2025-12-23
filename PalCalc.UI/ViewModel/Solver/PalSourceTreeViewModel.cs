@@ -5,6 +5,7 @@ using PalCalc.UI.Localization;
 using PalCalc.UI.Model;
 using PalCalc.UI.ViewModel.Mapped;
 using QuickGraph;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -58,117 +59,9 @@ namespace PalCalc.UI.ViewModel.Solver
     }
 
 
-    public partial class GuildSourceTreeNodeViewModel : ObservableObject, IPalSourceTreeNode
-    {
-        private int suppressSelectionCount = 0;
-        private void SuppressSelectionChangedDuring(Action fn)
-        {
-            suppressSelectionCount++;
-            try { fn(); }
-            finally { --suppressSelectionCount; }
-        }
-
-        public GuildSourceTreeNodeViewModel(CachedSaveGame source, GuildInstance guild)
-        {
-            ModelObject = guild;
-            Label = new HardCodedText(guild.Name);
-            PlayerNodes = guild.MemberIds
-                .Select(pid => new PlayerSourceTreeNodeViewModel(source.PlayersById[pid]))
-                .OrderBy(n => n.ModelObject.Name)
-                .ToList();
-
-            Children = PlayerNodes.OfType<IPalSourceTreeNode>().ToList();
-
-            foreach (var c in PlayerNodes)
-            {
-                PropertyChangedEventManager.AddHandler(c, MemberPlayer_CheckedPropertyChanged, nameof(c.IsChecked));
-            }
-        }
-
-        private void MemberPlayer_CheckedPropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            SuppressSelectionChangedDuring(() =>
-            {
-                if (Children.All(c => c.IsChecked == true))
-                    IsChecked = true;
-                else if (Children.All(c => c.IsChecked == false))
-                    IsChecked = false;
-                else
-                    IsChecked = null;
-            });
-
-            if (suppressSelectionCount == 0)
-            {
-                OnPropertyChanged(nameof(AsSelection));
-                OnPropertyChanged(nameof(IsChecked));
-            }
-        }
-
-        public GuildInstance ModelObject { get; }
-
-        public ILocalizedText Label { get; }
-
-        public List<PlayerSourceTreeNodeViewModel> PlayerNodes { get; }
-        public IEnumerable<IPalSourceTreeNode> Children { get; }
-
-        private bool? isChecked = true;
-        public bool? IsChecked
-        {
-            get => isChecked;
-            set
-            {
-                if (SetProperty(ref isChecked, value))
-                {
-                    SuppressSelectionChangedDuring(() =>
-                    {
-                        if (value == true)
-                        {
-                            foreach (var c in PlayerNodes)
-                                c.IsChecked = true;
-                        }
-                        else if (value == false)
-                        {
-                            foreach (var c in PlayerNodes)
-                                c.IsChecked = false;
-                        }
-                    });
-
-                    if (suppressSelectionCount == 0)
-                    {
-                        OnPropertyChanged(nameof(AsSelection));
-                    }
-                }
-            }
-        }
-
-        public List<IPalSourceTreeSelection> AsSelection =>
-            Children.All(c => c.IsChecked == true)
-                ? [new SourceTreeGuildSelection(ModelObject)]
-                : Children.SelectMany(c => c.AsSelection).SkipNull().ToList();
-
-        public void ReadFromSelections(List<IPalSourceTreeSelection> selections)
-        {
-            SuppressSelectionChangedDuring(() =>
-            {
-                if (selections.OfType<SourceTreeGuildSelection>().Any(s => s.ModelObject.Id == ModelObject.Id))
-                {
-                    foreach (var c in PlayerNodes)
-                        c.IsChecked = true;
-                }
-                else
-                {
-                    foreach (var c in Children)
-                        c.ReadFromSelections(selections);
-                }
-            });
-
-            OnPropertyChanged(nameof(AsSelection));
-        }
-    }
-
-
     public partial class PalSourceTreeViewModel : ObservableObject
     {
+        private static ILogger logger = Log.ForContext<PalSourceTreeViewModel>();
         private bool suppressSelectionChanged = false;
         private void SuppressSelectionChangedDuring(Action fn)
         {
@@ -189,9 +82,9 @@ namespace PalCalc.UI.ViewModel.Solver
         {
             Save = save;
 
-            RootNodes = save.Guilds
-                .OrderBy(g => g.Name)
-                .Select(g => new GuildSourceTreeNodeViewModel(save, g))
+            RootNodes = save.Players
+                .OrderBy(p => p.Name)
+                .Select(p => new PlayerSourceTreeNodeViewModel(p))
                 .OfType<IPalSourceTreeNode>()
                 .ToList();
 
@@ -203,6 +96,8 @@ namespace PalCalc.UI.ViewModel.Solver
             {
                 PropertyChangedEventManager.AddHandler(node, Node_SelectionPropertyChanged, nameof(node.AsSelection));
             }
+            
+            logger.Information("PalSourceTreeViewModel: Created with {count} players (all initially checked)", RootNodes.Count);
         }
 
         private void Node_SelectionPropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -218,27 +113,58 @@ namespace PalCalc.UI.ViewModel.Solver
         {
             get
             {
-                return AllNodes.All(n => n.IsChecked == true)
+                var selections = AllNodes.All(n => n.IsChecked == true)
                     ? [new SourceTreeAllSelection()]
                     : RootNodes.SelectMany(n => n.AsSelection).ToList();
+                
+                return selections;
             }
             set
             {
+                logger.Information("PalSourceTreeViewModel.Selections setter: Received {count} selections", value?.Count ?? 0);
+                if (value != null)
+                {
+                    foreach (var sel in value)
+                    {
+                        logger.Information("  - Setting selection: {id}", sel.SerializedId);
+                    }
+                }
+                
                 SuppressSelectionChangedDuring(() =>
                 {
                     if (value.OfType<SourceTreeAllSelection>().Any())
                     {
+                        logger.Information("PalSourceTreeViewModel.Selections setter: Setting all nodes to checked");
                         foreach (var node in AllNodes)
                             node.IsChecked = true;
                     }
                     else
                     {
+                        logger.Information("PalSourceTreeViewModel.Selections setter: Applying selections to root nodes");
+                        // First, uncheck all nodes
+                        foreach (var node in AllNodes)
+                            node.IsChecked = false;
+                        
+                        // Then apply the specific selections
                         foreach (var node in RootNodes)
                             node.ReadFromSelections(value);
                     }
+                    
+                    // Raise PropertyChanged events INSIDE the suppression block won't help
+                    // because the events are queued and fired after
                 });
+                
+                // These property changed notifications happen AFTER suppressSelectionChanged is set back to false
                 OnPropertyChanged(nameof(Selections));
                 OnPropertyChanged(nameof(HasValidSource));
+                
+                // Log what the getter returns after setting
+                var currentSelections = Selections;
+                logger.Information("PalSourceTreeViewModel.Selections setter: After setting, getter returns {count} selections", currentSelections.Count);
+                foreach (var sel in currentSelections)
+                {
+                    logger.Information("  - Current selection: {id}", sel.SerializedId);
+                }
             }
         }
 

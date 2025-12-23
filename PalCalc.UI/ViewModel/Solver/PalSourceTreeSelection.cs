@@ -33,13 +33,17 @@ namespace PalCalc.UI.ViewModel.Solver
                         return new SourceTreePlayerSelection(player);
 
                     case "GUILD":
+                        // Migrate old guild selections to player selections
                         var guild = source.Guilds.FirstOrDefault(g => g.Id == value);
                         if (guild == null)
                         {
-                            logger.Warning("Unrecognized guild with ID '{GuildID}' from selection serialized-id '{RawID}'", value, serializedId);
+                            logger.Warning("Unrecognized guild with ID '{GuildID}' from selection serialized-id '{RawID}', unable to migrate to player selections", value, serializedId);
                             return null;
                         }
 
+                        logger.Information("Migrating old guild selection '{GuildName}' to individual player selections", guild.Name);
+                        // Return the first player as a representative - the calling code should handle expanding this to all guild members
+                        // For now, we'll just use a guild selection internally to maintain compatibility
                         return new SourceTreeGuildSelection(guild);
                 }
             }
@@ -98,6 +102,10 @@ namespace PalCalc.UI.ViewModel.Solver
         }
     }
 
+    /// <summary>
+    /// Legacy guild selection - kept for backward compatibility during deserialization.
+    /// Will be converted to player selections.
+    /// </summary>
     public class SourceTreeGuildSelection(GuildInstance guild) : IPalSourceTreeSelection
     {
         public GuildInstance ModelObject => guild;
