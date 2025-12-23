@@ -139,7 +139,8 @@ namespace PalCalc.UI.ViewModel
                 runSolverCommand: RunSolverCommand,
                 cancelSolverCommand: CancelSolverCommand,
                 pauseSolverCommand: PauseSolverCommand,
-                resumeSolverCommand: ResumeSolverCommand
+                resumeSolverCommand: ResumeSolverCommand,
+                calculateReachablePalsCommand: null
             );
             SolverControls.CopyFrom(settings.SolverSettings);
             SolverControls.PropertyChanged += (s, e) =>
@@ -187,6 +188,7 @@ namespace PalCalc.UI.ViewModel
                     sg =>
                     {
                         if (Storage.DEBUG_DisableStorage) return new PalTargetListViewModel();
+
 
 
 
@@ -410,7 +412,14 @@ namespace PalCalc.UI.ViewModel
         private void CachedSaveGame_SaveFileLoadEnd(ISaveGame obj, CachedSaveGame loaded)
         {
             if (loaded != null && targetsBySaveFile.ContainsKey(obj))
-                targetsBySaveFile[obj].UpdateCachedData(loaded, GameSettingsViewModel.Load(obj).ModelObject);
+            {
+                var containerLocation = SaveSelection.SavesLocations
+                    .OfType<StandardSavesLocationViewModel>()
+                    .FirstOrDefault(l => l.SaveGames.OfType<SaveGameViewModel>().Any(sg => sg.Value == obj))
+                    ?.Value;
+                
+                targetsBySaveFile[obj].UpdateCachedData(loaded, GameSettingsViewModel.Load(obj).ModelObject, containerLocation);
+            }
         }
 
         private void CachedSaveGame_SaveFileLoadError(ISaveGame obj, Exception ex)
@@ -421,6 +430,24 @@ namespace PalCalc.UI.ViewModel
             AdonisMessageBox.Show(LocalizationCodes.LC_ERROR_SAVE_LOAD_FAILED.Bind(crashsupport).Value, caption: "");
 
             SaveSelection.SelectedGame = null;
+        }
+
+        partial void OnPalTargetListChanged(PalTargetListViewModel value)
+        {
+            if (SolverControls != null && value != null)
+            {
+                SolverControls.CalculateReachablePalsCommand = value.CalculateReachablePalsCommand;
+                
+                // Subscribe to solver run requests from reachable pals double-click
+                value.OnRunSolverRequested -= OnRunSolverRequestedFromReachablePals;
+                value.OnRunSolverRequested += OnRunSolverRequestedFromReachablePals;
+            }
+        }
+        
+        private void OnRunSolverRequestedFromReachablePals(PalSpecifierViewModel target)
+        {
+            logger.Information("Solver run requested from reachable pal: {palName}", target.TargetPal?.Name?.Value ?? "unknown");
+            RunSolver();
         }
 
         private void UpdateFromSaveProperties()
@@ -452,15 +479,23 @@ namespace PalCalc.UI.ViewModel
 
                 SelectedGameSettings = GameSettingsViewModel.Load(SaveSelection.SelectedFullGame.Value);
                 SelectedGameSettings.PropertyChanged += GameSettings_PropertyChanged;
+                
+                // Update reachability with cached save (if available) or null initially
+                var csg = SaveSelection.SelectedFullGame?.CachedValue;
+                if (csg != null)
+                {
+                    var containerLocation = SaveSelection.SelectedLocation?.Value;
+                    PalTargetList.UpdateCachedData(csg, SelectedGameSettings.ModelObject, containerLocation);
+                }
             }
 
             UpdatePalTarget();
             UpdateSolverControls();
 
-            var csg = SaveSelection.SelectedFullGame?.CachedValue;
-            if (csg != null)
+            var csg2 = SaveSelection.SelectedFullGame?.CachedValue;
+            if (csg2 != null)
             {
-                foreach (var passive in csg.OwnedPals.SelectMany(p => p.PassiveSkills).OfType<UnrecognizedPassiveSkill>())
+                foreach (var passive in csg2.OwnedPals.SelectMany(p => p.PassiveSkills).OfType<UnrecognizedPassiveSkill>())
                 {
                     // preload any unrecognized passives so they appear in dropdowns
                     PassiveSkillViewModel.Make(passive);
@@ -474,6 +509,9 @@ namespace PalCalc.UI.ViewModel
             {
                 PalTarget = new PalTargetViewModel(SaveSelection.SelectedFullGame, PalTargetList.SelectedTarget, passivePresets);
                 passivePresets.ActivePalTarget = PalTarget;
+                
+                // Pass current PalTarget to PalTargetList so it can access Source Pals selections
+                PalTargetList.SetCurrentPalTarget(PalTarget);
             }
             else
                 PalTarget = null;
@@ -505,7 +543,7 @@ namespace PalCalc.UI.ViewModel
             }
         }
 
-        private void SaveTargetList(PalTargetListViewModel list)
+        private void SaveTargetList(PalTargetListViewModel list = null)
         {
             if (Storage.DEBUG_DisableStorage) return;
 

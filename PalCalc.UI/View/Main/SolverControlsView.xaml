@@ -7,6 +7,7 @@
              xmlns:vms="clr-namespace:PalCalc.UI.ViewModel.Solver"
              xmlns:vu="clr-namespace:PalCalc.UI.View.Utils"
              xmlns:itl="clr-namespace:PalCalc.UI.Localization"
+             xmlns:c="clr-namespace:PalCalc.UI.ViewModel.Converters"
              xmlns:local="clr-namespace:PalCalc.UI.View.Main"
              xmlns:adonisUi="clr-namespace:AdonisUI;assembly=AdonisUI"
              mc:Ignorable="d" 
@@ -14,6 +15,8 @@
              d:DesignWidth="1000.621">
     <vu:SpacedWrapPanel Orientation="Horizontal" HorizontalSpacing="25" VerticalSpacing="15" HorizontalContentAlignment="{Binding RelativeSource={RelativeSource AncestorType=local:SolverControlsView}, Path=HorizontalContentAlignment}">
         <vu:SpacedWrapPanel.Resources>
+            <c:ValueVisibilityConverter x:Key="VVC" />
+            
             <GridLength x:Key="SepHeight">5</GridLength>
             <GridLength x:Key="SepWidth">10</GridLength>
 
@@ -198,6 +201,14 @@
 
                 <ContentPresenter Style="{StaticResource ContentPresenterTemplate}" Content="{Binding}" />
             </DockPanel>
+        </Grid>
+
+        <!-- Calculate Reachable Pals Button -->
+        <Grid>
+            <Button Command="{Binding CalculateReachablePalsCommand}" 
+                    Content="Calculate Reachable Pals"
+                    ToolTipService.ToolTip="Calculate which pals are reachable through breeding using the selected Source Pals"
+                    MinWidth="150"/>
         </Grid>
     </vu:SpacedWrapPanel>
 </UserControl>

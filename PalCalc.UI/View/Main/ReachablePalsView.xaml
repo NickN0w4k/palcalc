@@ -1,0 +1,121 @@
+<UserControl x:Class="PalCalc.UI.View.Main.ReachablePalsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:local="clr-namespace:PalCalc.UI.View.Main"
+             xmlns:vm="clr-namespace:PalCalc.UI.ViewModel"
+             xmlns:mvm="clr-namespace:PalCalc.UI.ViewModel.Mapped"
+             xmlns:adonisUI="clr-namespace:AdonisUI;assembly=AdonisUI"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="400">
+    <Grid Background="{DynamicResource {x:Static adonisUI:Brushes.Layer0BackgroundBrush}}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Vertical" Margin="10" Background="{DynamicResource {x:Static adonisUI:Brushes.Layer1BackgroundBrush}}">
+            <TextBlock FontSize="14" FontWeight="Bold" Margin="0,8,0,8" 
+                       Foreground="{DynamicResource {x:Static adonisUI:Brushes.ForegroundBrush}}">
+                <Run Text="Erreichbare Pals: " />
+                <Run Text="{Binding ReachableCount}" Foreground="{DynamicResource {x:Static adonisUI:Brushes.AccentBrush}}" />
+                <Run Text=" / Besessen: " />
+                <Run Text="{Binding OwnedCount}" Foreground="{DynamicResource {x:Static adonisUI:Brushes.AccentBrush}}" />
+            </TextBlock>
+
+            <CheckBox Content="Nach Seltenheit sortieren (Rarest First)" 
+                      IsChecked="{Binding SortByRarity, Mode=TwoWay}"
+                      Margin="0,0,0,8"
+                      Foreground="{DynamicResource {x:Static adonisUI:Brushes.ForegroundBrush}}" />
+            
+            <CheckBox Content="Only show pals I don't have yet" 
+                      IsChecked="{Binding ShowOnlyNew, Mode=TwoWay}"
+                      Margin="0,0,0,8"
+                      Foreground="{DynamicResource {x:Static adonisUI:Brushes.ForegroundBrush}}" />
+
+            <Separator Foreground="{DynamicResource {x:Static adonisUI:Brushes.Layer2BorderBrush}}" 
+                       Margin="0,0,0,8" />
+        </StackPanel>
+
+        <ListBox Grid.Row="1"
+                 ItemsSource="{Binding ReachablePalsView}"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 Margin="5"
+                 Background="{DynamicResource {x:Static adonisUI:Brushes.Layer0BackgroundBrush}}"
+                 Foreground="{DynamicResource {x:Static adonisUI:Brushes.ForegroundBrush}}"
+                 BorderBrush="{DynamicResource {x:Static adonisUI:Brushes.Layer2BorderBrush}}">
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="mvm:PalViewModel">
+                    <Grid Margin="5" MinHeight="40">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
+                            <TextBlock Text="{Binding ModelObject.Name}" 
+                                       FontWeight="Bold" 
+                                       FontSize="12"
+                                       Foreground="{DynamicResource {x:Static adonisUI:Brushes.ForegroundBrush}}" />
+                            <TextBlock Text="{Binding ModelObject.Id}" 
+                                       FontSize="10" 
+                                       Foreground="{DynamicResource {x:Static adonisUI:Brushes.DisabledForegroundBrush}}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Breeding Power:" 
+                                       FontSize="10" 
+                                       Foreground="{DynamicResource {x:Static adonisUI:Brushes.DisabledForegroundBrush}}" />
+                            <TextBlock FontSize="11" 
+                                       FontWeight="Bold" 
+                                       Foreground="{DynamicResource {x:Static adonisUI:Brushes.AccentBrush}}">
+                                <TextBlock.Text>
+                                    <MultiBinding StringFormat="{}{0:F1}">
+                                        <Binding Path="ModelObject.BreedingPower" />
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </StackPanel>
+
+                        <TextBlock Grid.Column="2" 
+                                   VerticalAlignment="Center"
+                                   Margin="10,0,0,0"
+                                   FontSize="10"
+                                   Foreground="{DynamicResource {x:Static adonisUI:Brushes.AccentBrush}}">? Erreichbar</TextBlock>
+                        
+                        <Button Grid.Column="3"
+                                Content="Select"
+                                Margin="10,0,0,0"
+                                Padding="8,4"
+                                FontSize="10"
+                                VerticalAlignment="Center"
+                                Background="{DynamicResource {x:Static adonisUI:Brushes.AccentBrush}}"
+                                Foreground="{DynamicResource {x:Static adonisUI:Brushes.Layer0BackgroundBrush}}"
+                                Command="{Binding DataContext.PalDoubleClickedCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                CommandParameter="{Binding}" />
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Background" Value="Transparent" />
+                    <Setter Property="Foreground" Value="{DynamicResource {x:Static adonisUI:Brushes.ForegroundBrush}}" />
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource {x:Static adonisUI:Brushes.Layer1BackgroundBrush}}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource {x:Static adonisUI:Brushes.AccentBrush}}" />
+                            <Setter Property="Foreground" Value="{DynamicResource {x:Static adonisUI:Brushes.Layer0BackgroundBrush}}" />
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </ListBox.ItemContainerStyle>
+        </ListBox>
+    </Grid>
+</UserControl>
