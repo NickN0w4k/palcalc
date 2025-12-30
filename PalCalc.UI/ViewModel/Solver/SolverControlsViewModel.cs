@@ -29,7 +29,7 @@ namespace PalCalc.UI.ViewModel.Solver
 
     public partial class SolverControlsViewModel : ObservableObject
     {
-        public static SolverControlsViewModel DesignerInstance { get; } = new SolverControlsViewModel(null, null, null, null);
+        public static SolverControlsViewModel DesignerInstance { get; } = new SolverControlsViewModel(null, null, null, null, null);
 
         private PalListPresetCollectionViewModel PalListPresets => new(
             CurrentTarget?.PalSource?.Save,
@@ -41,7 +41,8 @@ namespace PalCalc.UI.ViewModel.Solver
             ICommand runSolverCommand,
             ICommand cancelSolverCommand,
             ICommand pauseSolverCommand,
-            ICommand resumeSolverCommand
+            ICommand resumeSolverCommand,
+            IRelayCommand calculateReachablePalsCommand
         )
         {
             MaxBreedingSteps = 6;
@@ -85,6 +86,7 @@ namespace PalCalc.UI.ViewModel.Solver
             CancelSolverCommand = cancelSolverCommand;
             PauseSolverCommand = pauseSolverCommand;
             ResumeSolverCommand = resumeSolverCommand;
+            CalculateReachablePalsCommand = calculateReachablePalsCommand;
         }
 
         private int maxBreedingSteps;
@@ -214,6 +216,13 @@ namespace PalCalc.UI.ViewModel.Solver
         public ICommand CancelSolverCommand { get; }
         public ICommand PauseSolverCommand { get; }
         public ICommand ResumeSolverCommand { get; }
+
+        private IRelayCommand calculateReachablePalsCommand1;
+        public IRelayCommand CalculateReachablePalsCommand
+        {
+            get => calculateReachablePalsCommand1;
+            set => SetProperty(ref calculateReachablePalsCommand1, value);
+        }
 
         public bool CanRunSolver => CurrentTarget?.IsValid == true && CurrentJob?.IsActive != true;
         public bool CanCancelSolver => CurrentJob?.IsActive == true;

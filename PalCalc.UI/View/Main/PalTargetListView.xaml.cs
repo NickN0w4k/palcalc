@@ -16,22 +16,21 @@ using System.Windows.Shapes;
 namespace PalCalc.UI.View.Main
 {
     /// <summary>
-    /// Interaction logic for PalTargetView.xaml
+    /// Interaction logic for PalTargetListView.xaml
     /// </summary>
-    public partial class PalTargetListView : ListBox
+    public partial class PalTargetListView : UserControl
     {
         public PalTargetListView()
         {
             InitializeComponent();
-
-            SetResourceReference(StyleProperty, typeof(ListBox));
         }
 
-        protected override void OnSelectionChanged(SelectionChangedEventArgs e)
+        private void PalTargetListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            base.OnSelectionChanged(e);
-
-            ScrollIntoView(SelectedItem);
+            if (sender is ListBox listBox && listBox.SelectedItem != null)
+            {
+                listBox.ScrollIntoView(listBox.SelectedItem);
+            }
         }
     }
 }

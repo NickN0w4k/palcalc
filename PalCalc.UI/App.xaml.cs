@@ -22,7 +22,7 @@ namespace PalCalc.UI
     public partial class App : Application
     {
         public static string Version => "v1.16.6-beta2";
-        public static string RepositoryUrl => "https://github.com/tylercamp/palcalc/";
+        public static string RepositoryUrl => "https://github.com/NickN0w4k/palcalc/";
 
         private static ILogger logger;
 

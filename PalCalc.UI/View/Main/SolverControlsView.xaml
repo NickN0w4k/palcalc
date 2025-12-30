@@ -7,22 +7,30 @@
              xmlns:vms="clr-namespace:PalCalc.UI.ViewModel.Solver"
              xmlns:vu="clr-namespace:PalCalc.UI.View.Utils"
              xmlns:itl="clr-namespace:PalCalc.UI.Localization"
+             xmlns:c="clr-namespace:PalCalc.UI.ViewModel.Converters"
              xmlns:local="clr-namespace:PalCalc.UI.View.Main"
              xmlns:adonisUi="clr-namespace:AdonisUI;assembly=AdonisUI"
              mc:Ignorable="d" 
              d:DataContext="{x:Static vms:SolverControlsViewModel.DesignerInstance}"
              d:DesignWidth="1000.621">
-    <vu:SpacedWrapPanel Orientation="Horizontal" HorizontalSpacing="25" VerticalSpacing="15" HorizontalContentAlignment="{Binding RelativeSource={RelativeSource AncestorType=local:SolverControlsView}, Path=HorizontalContentAlignment}">
+    <vu:SpacedWrapPanel Orientation="Horizontal" HorizontalSpacing="35" VerticalSpacing="20" HorizontalContentAlignment="{Binding RelativeSource={RelativeSource AncestorType=local:SolverControlsView}, Path=HorizontalContentAlignment}">
         <vu:SpacedWrapPanel.Resources>
-            <GridLength x:Key="SepHeight">5</GridLength>
-            <GridLength x:Key="SepWidth">10</GridLength>
+            <c:ValueVisibilityConverter x:Key="VVC" />
+            
+            <GridLength x:Key="SepHeight">8</GridLength>
+            <GridLength x:Key="SepWidth">15</GridLength>
 
             <Style TargetType="{x:Type vu:IntegerTextBox}">
-                <Setter Property="Width" Value="25" />
+                <Setter Property="Width" Value="50" />
+                <Setter Property="Height" Value="32" />
+                <Setter Property="FontSize" Value="16" />
                 <Setter Property="HorizontalAlignment" Value="Right" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="Padding" Value="8,4" />
             </Style>
             <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource {x:Type TextBlock}}">
                 <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="FontSize" Value="14" />
 
                 <Style.Triggers>
                     <DataTrigger Binding="{Binding CanEditSettings}" Value="False">
@@ -32,6 +40,11 @@
             </Style>
             <Style TargetType="{x:Type Grid}">
                 <Setter Property="VerticalAlignment" Value="Top" />
+            </Style>
+            <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="MinHeight" Value="36" />
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="Padding" Value="16,8" />
             </Style>
         </vu:SpacedWrapPanel.Resources>
 
@@ -168,15 +181,25 @@
             <DockPanel Grid.Row="4" Grid.ColumnSpan="99">
                 <DockPanel.Resources>
                     <DataTemplate x:Key="RunButtonTemplate">
-                        <Button Content="{itl:LocalizedText LC_SOLVER_RUN}" Command="{Binding RunSolverCommand}" HorizontalAlignment="Left" IsEnabled="{Binding CanRunSolver}" />
+                        <Button Content="{itl:LocalizedText LC_SOLVER_RUN}" 
+                                Command="{Binding RunSolverCommand}" 
+                                HorizontalAlignment="Left" 
+                                IsEnabled="{Binding CanRunSolver}"
+                                FontWeight="SemiBold" />
                     </DataTemplate>
 
                     <DataTemplate x:Key="PauseButtonTemplate">
-                        <Button Content="{itl:LocalizedText Code=LC_SOLVER_PAUSE}" Command="{Binding PauseSolverCommand}" HorizontalAlignment="Left" />
+                        <Button Content="{itl:LocalizedText Code=LC_SOLVER_PAUSE}" 
+                                Command="{Binding PauseSolverCommand}" 
+                                HorizontalAlignment="Left"
+                                FontWeight="SemiBold" />
                     </DataTemplate>
 
                     <DataTemplate x:Key="ResumeButtonTemplate">
-                        <Button Content="{itl:LocalizedText Code=LC_SOLVER_RESUME}" Command="{Binding ResumeSolverCommand}" HorizontalAlignment="Left" />
+                        <Button Content="{itl:LocalizedText Code=LC_SOLVER_RESUME}" 
+                                Command="{Binding ResumeSolverCommand}" 
+                                HorizontalAlignment="Left"
+                                FontWeight="SemiBold" />
                     </DataTemplate>
 
                     <Style x:Key="ContentPresenterTemplate" TargetType="ContentPresenter">
@@ -194,10 +217,22 @@
                     </Style>
                 </DockPanel.Resources>
 
-                <Button DockPanel.Dock="Right" Content="{itl:LocalizedText LC_COMMON_CANCEL}" Command="{Binding CancelSolverCommand}" IsEnabled="{Binding CanCancelSolver}" />
+                <Button DockPanel.Dock="Right" 
+                        Content="{itl:LocalizedText LC_COMMON_CANCEL}" 
+                        Command="{Binding CancelSolverCommand}" 
+                        IsEnabled="{Binding CanCancelSolver}" />
 
                 <ContentPresenter Style="{StaticResource ContentPresenterTemplate}" Content="{Binding}" />
             </DockPanel>
+        </Grid>
+
+        <!-- Calculate Reachable Pals Button -->
+        <Grid>
+            <Button Command="{Binding CalculateReachablePalsCommand}" 
+                    Content="Calculate Reachable Pals"
+                    ToolTipService.ToolTip="Calculate which pals are reachable through breeding using the selected Source Pals"
+                    MinWidth="200"
+                    FontWeight="Medium"/>
         </Grid>
     </vu:SpacedWrapPanel>
 </UserControl>
