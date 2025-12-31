@@ -22,15 +22,15 @@ namespace PalCalc.Solver.PalReference
     /// </summary>
     public class CompositeOwnedPalReference : IPalReference
     {
-        private static IV_IValue PropagateIVs(IV_IValue a, IV_IValue b)
+        private static IV_Value PropagateIVs(IV_Value a, IV_Value b)
         {
-            if (a is IV_Range ar && b is IV_Range br)
+            if (a != IV_Value.Random && b != IV_Value.Random)
             {
-                return IV_Range.Merge(ar, br);
+                return IV_Value.Merge(a, b);
             }
             else
             {
-                return IV_Random.Instance;
+                return IV_Value.Random;
             }
         }
 
@@ -87,9 +87,13 @@ namespace PalCalc.Solver.PalReference
 
         public TimeSpan SelfBreedingEffort { get; } = TimeSpan.Zero;
 
+        public int TotalCost => 0;
+
         private CompositeOwnedPalReference oppositeWildcardReference;
-        public IPalReference WithGuaranteedGender(PalDB db, PalGender gender)
+        public IPalReference WithGuaranteedGender(PalDB db, PalGender gender, bool useReverser)
         {
+            // (we have direct reprs for both genders, no need to check useReverser)
+
             switch (gender)
             {
                 case PalGender.MALE: return Male;
@@ -102,6 +106,14 @@ namespace PalCalc.Solver.PalReference
 
                 default: throw new NotImplementedException();
             }
+        }
+
+        public override bool Equals(object obj)
+        {
+            var asComposite = obj as CompositeOwnedPalReference;
+            if (ReferenceEquals(asComposite, null)) return false;
+
+            return GetHashCode() == obj.GetHashCode();
         }
 
         // TODO - maybe just use Pal, PassivesHash, Gender, IVs? don't need hashes specific to the instances chosen?

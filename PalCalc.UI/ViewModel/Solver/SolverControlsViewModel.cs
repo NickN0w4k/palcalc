@@ -49,6 +49,7 @@ namespace PalCalc.UI.ViewModel.Solver
             MaxWildPals = 1;
             MaxInputIrrelevantPassives = 2;
             MaxBredIrrelevantPassives = 1;
+            MaxGoldCost = 0;
 
             ChangeBredPals = new RelayCommand(() =>
             {
@@ -77,6 +78,21 @@ namespace PalCalc.UI.ViewModel.Solver
                 )
                 {
                     Title = LocalizationCodes.LC_SOLVER_SETTINGS_ALLOWED_WILD_PALS.Bind()
+                };
+                window.Owner = App.Current.MainWindow;
+                window.ShowDialog();
+            });
+
+            ChangeSurgeryPassives = new RelayCommand(() =>
+            {
+                var window = new PassivesCheckListWindow();
+                window.DataContext = new PassivesCheckListViewModel(
+                    onCancel: null,
+                    onSave: (passiveSelections) => BannedSurgeryPassives = passiveSelections.Where(kvp => !kvp.Value).Select(kvp => kvp.Key).ToList(),
+                    initialState: PalDB.LoadEmbedded().SurgeryPassiveSkills.ToDictionary(p => p, p => !BannedSurgeryPassives.Contains(p))
+                )
+                {
+                    Title = LocalizationCodes.LC_PASSIVES_CHECKLIST_SURGERY_TITLE.Bind()
                 };
                 window.Owner = App.Current.MainWindow;
                 window.ShowDialog();
@@ -139,6 +155,20 @@ namespace PalCalc.UI.ViewModel.Solver
         {
             get => maxSolverIterations;
             set => SetProperty(ref maxSolverIterations, Math.Clamp(value, 1, 99));
+        }
+
+        private int maxGoldCost;
+        public int MaxGoldCost
+        {
+            get => maxGoldCost;
+            set => SetProperty(ref maxGoldCost, Math.Max(value, 0));
+        }
+
+        private bool useGenderReversers;
+        public bool UseGenderReversers
+        {
+            get => useGenderReversers;
+            set => SetProperty(ref useGenderReversers, value);
         }
 
         private void OnStatePropertiesChanged()
@@ -230,12 +260,16 @@ namespace PalCalc.UI.ViewModel.Solver
 
         public IRelayCommand ChangeBredPals { get; }
         public IRelayCommand ChangeWildPals { get; }
+        public IRelayCommand ChangeSurgeryPassives { get; }
 
         [ObservableProperty]
         private List<Pal> bannedBredPals = new List<Pal>();
 
         [ObservableProperty]
         private List<Pal> bannedWildPals = new List<Pal>();
+
+        [ObservableProperty]
+        private List<PassiveSkill> bannedSurgeryPassives = new List<PassiveSkill>();
 
         public BreedingSolver ConfiguredSolver(GameSettings gameSettings, List<PalInstance> pals) => new BreedingSolver(
             new BreedingSolverSettings(
@@ -251,7 +285,11 @@ namespace PalCalc.UI.ViewModel.Solver
                 maxInputIrrelevantPassives: MaxInputIrrelevantPassives,
                 maxBredIrrelevantPassives: MaxBredIrrelevantPassives,
                 maxEffort: TimeSpan.MaxValue,
-                maxThreads: MaxThreads
+                maxThreads: MaxThreads,
+
+                maxSurgeryCost: MaxGoldCost,
+                allowedSurgeryPassives: PalDB.LoadEmbedded().SurgeryPassiveSkills.Except(BannedSurgeryPassives).ToList(),
+                useGenderReversers: UseGenderReversers
             )
         );
 
@@ -265,6 +303,9 @@ namespace PalCalc.UI.ViewModel.Solver
             MaxThreads = MaxThreads,
             BannedBredPalInternalNames = BannedBredPals.Select(p => p.InternalName).ToList(),
             BannedWildPalInternalNames = BannedWildPals.Select(p => p.InternalName).ToList(),
+            BannedSurgeryPassiveInternalNames = BannedSurgeryPassives.Select(p => p.InternalName).ToList(),
+            MaxGoldCost = MaxGoldCost,
+            UseGenderReversers = UseGenderReversers,
         };
 
         public void CopyFrom(SerializableSolverSettings model)
@@ -275,9 +316,12 @@ namespace PalCalc.UI.ViewModel.Solver
             MaxInputIrrelevantPassives = model.MaxInputIrrelevantPassives;
             MaxBredIrrelevantPassives = model.MaxBredIrrelevantPassives;
             MaxThreads = model.MaxThreads;
+            MaxGoldCost = model.MaxGoldCost;
+            UseGenderReversers = model.UseGenderReversers;
 
             BannedBredPals = model.BannedBredPals(PalDB.LoadEmbedded());
             BannedWildPals = model.BannedWildPals(PalDB.LoadEmbedded());
+            BannedSurgeryPassives = model.BannedSurgeryPassives(PalDB.LoadEmbedded());
         }
     }
 }

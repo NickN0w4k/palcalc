@@ -16,8 +16,18 @@ using System.Windows.Controls;
 
 namespace PalCalc.UI.ViewModel.Solver
 {
+    // A snapshot of the full solver settings used when the breeding results were produced. Used
+    // during deserialization.
+    public class BreedingResultListViewModelSettingsSnapshot
+    {
+        public GameSettings GameSettings { get; set; }
+        public SerializableSolverSettings SolverSettings { get; set; }
+    }
+
     public partial class BreedingResultListViewModel : ObservableObject
     {
+        public BreedingResultListViewModelSettingsSnapshot SettingsSnapshot { get; set; }
+
         private List<BreedingResultViewModel> results;
         public List<BreedingResultViewModel> Results
         {
@@ -109,9 +119,9 @@ namespace PalCalc.UI.ViewModel.Solver
                     new List<PassiveSkill>() { "Runner".ToStandardPassive(PalDB.LoadEmbedded()) },
                     new IV_Set()
                     {
-                        HP = new IV_Range(true, 80, 90),
-                        Attack = IV_Random.Instance,
-                        Defense = IV_Random.Instance
+                        HP = new IV_Value(true, 80, 90),
+                        Attack = IV_Value.Random,
+                        Defense = IV_Value.Random
                     }
                 ))
             }
